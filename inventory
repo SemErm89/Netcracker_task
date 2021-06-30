@@ -1,0 +1,11 @@
+[backend]
+ubuntu ansible_host=u21.local ansible_connection=ssh ansible_user=ubuntu ansible_ssh_pass=12345678
+[frontend]
+centos ansible_host=c8.local ansible_connection=ssh ansible_user=centos ansible_ssh_pass=12345678
+
+0800278310F3
+
+
+
+
+
