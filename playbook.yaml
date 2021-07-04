@@ -1,4 +1,70 @@
 -
   name: configuration frontend
   hosts: frontend
+  become: yes
   tasks:
+    - name: Disable SELinux
+      selinux:
+        state: disabled
+
+    - name: status SELinux
+      shell: "sestatus"
+      register: status_SELinux
+    - debug:
+        msg: " {{status_SELinux.stdout_lines}}"
+
+    - name: be sure firewalld is installed
+      dnf: name=firewalld state=installed
+      tags:
+        - install
+        - firewalld
+
+    - name: be sure firewalld is disabled
+      systemd: name=firewalld enabled=no
+      tags:
+         - install
+         - atomic
+         - firewalld
+
+    - name: be sure firewalld is stopped
+      systemd: name=firewalld state=stopped
+      ignore_errors: yes
+      tags:
+        - install
+        - atomic
+        - firewalld
+    - name: Install Nginx Web Server
+      yum:
+        name=nginx
+        state=latest
+      notify:
+        - nginx systemd
+    - name: configure NGINX
+      lineinfile:
+        path: /etc/nginx/nginx.conf
+        insertafter: 'location / {'
+        line: "         proxy_pass http://192.168.5.152:19999;"
+    - name: start nginx
+      service:
+         name: nginx
+         state: started
+-
+  name: configuration backend
+  hosts: backend
+  become: yes
+  tasks:
+    - name:
+      git:
+          repo: 'https://github.com/firehol/netdata.git'
+          dest: /opt/netdata/
+          clone: yes
+          update: yes
+    - name: to run the shell script
+      shell: bash netdata-installer.sh --dont-wait --libs-are-really-here
+      args:
+           chdir: /opt/netdata
+  handlers:
+    - name: to restart netdata
+      service:
+        name: netdata
+        state: restarted
