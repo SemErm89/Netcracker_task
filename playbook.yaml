@@ -15,24 +15,16 @@
 
     - name: be sure firewalld is installed
       dnf: name=firewalld state=installed
-      tags:
-        - install
-        - firewalld
+
 
     - name: be sure firewalld is disabled
       systemd: name=firewalld enabled=no
-      tags:
-         - install
-         - atomic
-         - firewalld
+
 
     - name: be sure firewalld is stopped
       systemd: name=firewalld state=stopped
       ignore_errors: yes
-      tags:
-        - install
-        - atomic
-        - firewalld
+
     - name: Install Nginx Web Server
       yum:
         name=nginx
@@ -44,15 +36,20 @@
         path: /etc/nginx/nginx.conf
         insertafter: 'location / {'
         line: "         proxy_pass http://192.168.5.152:19999;"
-    - name: start nginx
+    - name: restart nginx
       service:
          name: nginx
-         state: started
+         state: restarted
 -
   name: configuration backend
   hosts: backend
   become: yes
   tasks:
+    - name: To install NetData
+      apt:
+        name: [ 'git', 'zlib1g-dev', 'uuid-dev', 'libmnl-dev', 'pkg-config', 'curl', 'gcc', 'make', 'autoconf', 'autoconf-archive', 'autogen', 'automake', 'lm-sensors', 'netcat', 'nodejs', 'libuv1-dev', 'zlib1g-dev' ]
+        update_cache: yes
+        state: present
     - name:
       git:
           repo: 'https://github.com/firehol/netdata.git'
